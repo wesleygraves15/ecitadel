@@ -13,8 +13,9 @@
 #      absent binary (e.g. clang) because the failing chmod tripped `set -e`.
 #      A hardening script must push through best-effort steps, not die on the
 #      first missing optional binary.
-#   3. Guarded the call to normalizeToolsSecurity.sh (file is absent from the
-#      repo; the original called `bash <missing>` with no guard -> exit 127).
+#   3. Removed the step-7 enumeration + normalizeTools* calls. Enumeration is run
+#      by the box master (PHASE 6, backgrounded) to avoid a double run, and the
+#      normalizeTools* helpers are not part of this bundle.
 #   4. Removed the hardcoded `svcadmin:Changeme1!` credential. This repo is
 #      public; a static password = free red-team access. Now generated random
 #      and written root-only to /root/.ecitadel_svcadmin_cred (0600).
@@ -265,12 +266,10 @@ else
     echo "[WARN] securitySweep.sh not found - background loop not started"
 fi
 
-# --- 7. ENUMERATION & TOOL NORMALIZATION (each guarded) ---
-echo "Running enumeration and tool normalization scripts"
-[[ -f "$SCRIPT_DIR/masterEnum.sh" ]]            && bash "$SCRIPT_DIR/masterEnum.sh" >> "$LOG_FILE" 2>&1 || echo "[WARN] masterEnum.sh missing"
-[[ -f "$POSTHARDEN_DIR/normalizeToolsGeneral.sh" ]]  && bash "$POSTHARDEN_DIR/normalizeToolsGeneral.sh"  >> "$LOG_FILE" 2>&1 || echo "[WARN] normalizeToolsGeneral.sh missing"
-[[ -f "$POSTHARDEN_DIR/normalizeToolsSecurity.sh" ]] && bash "$POSTHARDEN_DIR/normalizeToolsSecurity.sh" >> "$LOG_FILE" 2>&1 || echo "[WARN] normalizeToolsSecurity.sh missing (not in repo)"
-echo "Scripts completed. Check $LOG_FILE for more details."
+# --- 7. (enumeration is run by the box master in its PHASE 6, backgrounded, so it
+#         is intentionally NOT invoked here to avoid running the big enum twice.
+#         The normalizeTools* helpers are not part of this bundle and were removed.)
+echo "Baseline hardening steps complete."
 
 echo "==================================================="
 echo "        SYSTEM HARDENING COMPLETE"
